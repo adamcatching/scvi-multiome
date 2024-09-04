@@ -1,0 +1,160 @@
+import pandas
+
+num_workers = 8
+project = 'card_atac_atlas'
+
+r_packages = 'scripts/load_packages.r'
+samples_list = '/data/CARD_singlecell/Brain_atlas/samples.332.20240809.csv'
+
+datasets = pandas.read_csv(samples_list)['sample'].tolist()
+envs = {'muon': 'envs/muon.yml', 'multiome': 'envs/multiome.yml', 'convert': 'envs/convert.yml', 'dask': 'envs/dask.yml'}
+
+metrics = [
+    'nCount_ATAC', 'nFeature_ATAC', 'frip', 'frequency_count', 'reads_count', 
+    'mononucleosomal', 'nucleosome_free', 'nucleosome_signal', 'TSS.enrichment'
+]
+
+
+localrules: all, plot_qc
+
+rule all:
+    input:
+        expand('output/{dataset}_fragments.bed', dataset=datasets)
+
+
+rule preprocess:
+    input:
+        metadata='/data/CARD_singlecell/brain_atlas_rna/output/rna_filtered_metadata.csv'
+    output:
+        seurat='objects/01_{dataset}_seurat_object.rds'
+    conda:
+        envs['multiome']
+    params:
+        sample='{dataset}', 
+        packages=r_packages
+    resources:
+        runtime=120, mem_mb=64000, disk_mb=10000, slurm_partition='quick' 
+    script: 
+        'scripts/main/preprocess.R'
+
+rule gmm_qc:
+    input:
+        seurat=expand('objects/01_{dataset}_seurat_object.rds', dataset=datasets)
+    output:
+        metadata='output/unfiltered_metadata.csv'
+    params:
+        project_name=project,
+        packages=r_packages
+    conda:
+        envs['multiome']
+    threads:
+        num_workers
+    resources:
+        runtime=480, mem_mb=600000, disk_mb=10000, slurm_partition='largemem' 
+    script:
+        'scripts/main/gmm_qc.R'
+
+rule plot_qc:
+    input:
+        metadata='output/unfiltered_metadata.csv'
+    output:
+        plot_1='plots/qc_plot1.png', plot_2='plots/qc_plot2.png',
+        plot_3='plots/qc_plot3.png', plot_4='plots/qc_plot4.png',
+        plot_5='plots/qc_plot5.png', plot_6='plots/qc_plot6.png'
+    conda:
+        envs['multiome']
+    params:
+        noise=metrics,
+        packages=r_packages,
+        project_name=project
+    threads:
+        num_workers
+    script:
+        'scripts/main/plot_qc_metrics.R'
+
+rule filter:
+    input:
+        seurat='objects/01_{dataset}_seurat_object.rds'
+    output:
+        peaks='output/{dataset}_peaks.rds',
+        seurat='objects/02_{dataset}_seurat_object.rds'
+    conda:
+        envs['multiome']
+    params:
+        packages=r_packages
+    resources:
+        runtime=120, mem_mb=64000, disk_mb=10000, slurm_partition='quick' 
+    script: 
+        'scripts/main/filter.R'
+
+rule merge_peaks:
+    input:
+        peaks=expand('output/{dataset}_peaks.rds', dataset=datasets)
+    output:
+        merged_peaks='output/merged_atac_peaks.rds'
+    conda:
+        envs['multiome']
+    params:
+        packages=r_packages
+    threads:
+        num_workers
+    resources:
+        runtime=120, mem_mb=32000, disk_mb=10000, slurm_partition='quick' 
+    script:
+        'scripts/main/merge_peaks.R'
+
+rule rebuild_atac:
+    input:
+        merged_peaks='output/merged_atac_peaks.rds',
+        seurat='objects/02_{dataset}_seurat_object.rds'
+    output:
+        seurat='objects/03_{dataset}_seurat_object.rds'
+    conda:
+        envs['multiome']
+    params:
+        packages=r_packages
+    threads:
+        num_workers
+    resources:
+        runtime=240, mem_mb=64000, disk_mb=10000, slurm_partition='quick' 
+    script:
+        'scripts/main/rebuild_atac_assay.R'
+
+rule to_anndata:
+    input:
+        seurat='objects/03_{dataset}_seurat_object.rds'
+    output:
+        anndata='objects/01_{dataset}_anndata_object.h5ad'
+    conda:
+        envs['convert']
+    resources:
+        runtime=60, mem_mb=64000, disk_mb=10000, slurm_partition='quick' 
+    script:
+        'scripts/main/to_anndata.R'
+
+rule fragments:
+    input:
+        seurat='objects/03_{dataset}_seurat_object.rds'
+    output:
+        bed='output/{dataset}_fragments.bed'
+    conda:
+        envs['multiome']
+    threads:
+        8
+    resources:
+        runtime=60, mem_mb=64000, disk_mb=10000, slurm_partition='quick' 
+    script:
+        'scripts/main/sample_fragments.R'
+    
+rule merge_anndata:
+    input:
+        anndata=expand('objects/01_{dataset}_anndata_object.h5ad', dataset=datasets)
+    output:
+        anndata='objects/02_merged_anndata_object.h5ad'
+    conda:
+        envs['muon']
+    resources:
+        runtime=480, mem_mb=800000, disk_mb=10000, slurm_partition='largemem' 
+    script:
+        'scripts/main/merge_anndata.py'
+        
