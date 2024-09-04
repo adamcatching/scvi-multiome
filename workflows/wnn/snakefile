@@ -189,34 +189,3 @@ rule plot_clusters:
         runtime=120, mem_mb=600000, slurm_partition='largemem'        
     script:
         'scripts/main/plot_clusters.py'
-
-rule pseudobulk:
-    input:
-        muon_object='objects/04_muon_object.h5mu'
-    output:
-        pseudobulk='objects/01_atac_celltype_pseudobulk.h5ad'
-    params:
-        type_mapper=type_mapper
-    conda:
-        envs['decoupler']
-    resources:
-        runtime=720, mem_mb=500000, slurm_partition='largemem'
-    script:
-        'scripts/main/pseudobulk.py'
-
-rule motifs:
-    input:
-        genome='input/hg38.fa',
-        muon_object='objects/04_muon_object.h5mu'
-    output:
-        motifs='output/leiden_wnn_celltype_motifs.csv'
-    params:
-        type_mapper=type_mapper
-    conda:
-        envs['motifs']
-    threads:
-        num_workers * 4
-    resources:
-        runtime=2880, mem_mb=3000000, slurm_partition='largemem'
-    script:
-        'scripts/main/pychromvar.py'
