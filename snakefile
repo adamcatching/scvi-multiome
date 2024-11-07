@@ -35,7 +35,7 @@ rule preprocess:
         input_table=input_table,
         anndata='data/samples/{dataset}/cellbender_gex_counts_filtered.h5'
     output:
-        anndata='data/samples/{dataset}/01_{dataset}_anndata_object.h5ad'
+        anndata='data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad'
     conda:
         envs['singlecell']
     params:
@@ -48,7 +48,7 @@ rule preprocess:
 
 rule merge_unfiltered:
     input:
-        anndata=expand('data/samples/{dataset}/01_{dataset}_anndata_object.h5ad', dataset=datasets)
+        anndata=expand('data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad', dataset=datasets)
     output:
         anndata='data/atlas/02_merged_anndata_object.h5ad'
     conda:
