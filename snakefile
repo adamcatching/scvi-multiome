@@ -10,6 +10,16 @@ datasets = pandas.read_csv(input_table)['Sample'].tolist()
 
 envs = {'singlecell': 'envs/sc_2.yml', 'single_cell_gpu': 'envs/single_cell_gpu.yml', 'cellbender': 'envs/cellbender.yml', 'muon': 'envs/muon.yml'}
 
+# Define RNA thresholds
+mito_percent_thresh = 15
+doublet_thresh = 0.2
+min_total_counts = 500
+
+# Define ATAC thresholds
+min_peak_counts = 500
+min_num_cell_by_counts = 200
+
+
 
 localrules: all
 
@@ -50,7 +60,7 @@ rule merge_unfiltered:
     input:
         anndata=expand('data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad', dataset=datasets)
     output:
-        anndata='data/atlas/02_merged_anndata_object.h5ad'
+        anndata='data/atlas/02_merged_anndata_rna.h5ad'
     conda:
         envs['singlecell']
     resources:
@@ -60,9 +70,11 @@ rule merge_unfiltered:
 
 rule plot_qc:
     input:
-        anndata='data/atlas/02_merged_anndata_object.h5ad'
+        anndata='data/atlas/02_merged_anndata_rna.h5ad'
     conda:
         envs['muon']
+    params:
+        
     resources:
         runtime=120, mem_mb=100000, disk_mb=10000, slurm_partition='largemem' 
     script:
@@ -70,9 +82,9 @@ rule plot_qc:
 
 """rule filter:
     input:        
-        anndata='data/atlas/02_merged_anndata.h5ad'
+        anndata='data/atlas/02_merged_anndata_rna.h5ad'
     output:
-        seurat='data/atlas/03_merged_anndata.h5ad'
+        seurat='data/atlas/03_merged_anndata_rna.h5ad'
     conda:
         envs['singlecell']
     resources:
@@ -82,9 +94,9 @@ rule plot_qc:
 
 rule rna_workflow:
     input:
-        anndata='data/atlas/03_merged_anndata.h5mu',
+        anndata='data/atlas/03_merged_anndata_rna.h5mu',
     output:
-        anndata='data/atlas/04_merged_anndata.h5mu',
+        anndata='data/atlas/04_merged_anndata_rna.h5mu',
         model='data/models/rna/model_history.csv'
     conda:
         envs['single_cell_gpu']
