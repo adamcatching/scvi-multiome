@@ -36,9 +36,12 @@ for sample in adata.obs['sample'].to_list():
         print('Already there')
 
 
-    # Plot percent mitochondria 
+    """Plot percent mitochondria 
+    """
     fig, ax = plt.subplots(1, 2, figsize=(10, 4), sharey=False)
-    fig.suptitle(f' Sample {sample} ', fontsize=18)
+    fig.suptitle(f' Sample {sample} ', fontsize=BIGGER_SIZE)
+
+    # Violin plot in the first panel
     sc.pl.violin(adata[adata.obs['sample'] == sample], ['pct_counts_mt'], jitter=0.5, ax=ax[0], show=False)
     ax[0].set_ylabel('percent')
     ax[0].set_xticks('')
@@ -46,6 +49,7 @@ for sample in adata.obs['sample'].to_list():
     ax[0].plot([-.5, .5], [20, 20], '--r')
     ax[0].set_title('Percent mitochondria per cell')
 
+    # Histogram of values in the second panel
     y, x, _ = ax[1].hist(
         adata[adata.obs['sample'] == sample].obs['pct_counts_mt'], 
         bins=int(np.sqrt(adata[adata.obs['sample'] == sample].n_obs))
@@ -56,18 +60,21 @@ for sample in adata.obs['sample'].to_list():
     ax[1].plot([snakemake.mito_percent_thresh, snakemake.mito_percent_thresh], [1, y.max()], '--r')
     ax[1].set_ylim(0, y.max())
     ax[1].set_title('Percent mitochondria per cell')
-
     plt.savefig(f'plots/{sample}/mito_pct.png', dpi=300)
 
-    # Plot percent ribosome
+
+    """Plot percent ribosome"""
     fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-    fig.suptitle(f' Sample {sample} ', fontsize=18)
+    fig.suptitle(f' Sample {sample} ', fontsize=BIGGER_SIZE)
+
+    # Violin plot in the first panel
     sc.pl.violin(adata[adata.obs['sample'] == sample], ['pct_counts_rb'], jitter=0.5, ax=ax[0], show=False)
     ax[0].set_ylabel('percent')
     ax[0].set_xlim(-.75, .75)
     ax[0].plot([-.5, .5], [snakemake.ribo_precent_thresh, snakemake.ribo_precent_thresh], '--r')
     ax[0].set_title('Percent ribosome genes per cell')
 
+    # Histogram of values in the second panel
     y, x, _ = ax[1].hist(
         adata[adata.obs['sample'] == sample].obs['pct_counts_rb'], 
         bins=int(np.sqrt(adata[adata.obs['sample'] == sample].n_obs))
@@ -80,9 +87,10 @@ for sample in adata.obs['sample'].to_list():
     ax[1].set_title('Percent ribosome genes per cell')
     plt.savefig(f'plots/{sample}/ribo_pct.png', dpi=300)
 
-    # Plot number of genes per cell
+
+    """Plot number of genes per cell"""
     fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-    fig.suptitle(f' Sample {sample} ', fontsize=18)
+    fig.suptitle(f' Sample {sample} ', fontsize=BIGGER_SIZE)
 
     # Violin plot in the first panel
     sc.pl.violin(adata[adata.obs['sample'] == sample], ['n_genes_by_counts'], jitter=0.5, ax=ax[0], show=False)
@@ -91,6 +99,7 @@ for sample in adata.obs['sample'].to_list():
     ax[0].set_xlim(-.75, .75)
     ax[0].set_title('Number of genes per cell')
 
+    # Histogram of values in the second panel
     y, x, _ = ax[1].hist(
         adata[adata.obs['sample'] == sample].obs['n_genes_by_counts'], 
         bins=int(np.sqrt(adata[adata.obs['sample'] == sample].n_obs))
@@ -102,9 +111,10 @@ for sample in adata.obs['sample'].to_list():
     ax[1].set_title('Number of genes per cell')
     plt.savefig(f'plots/{sample}/num_genes_per_cell.png', dpi=300)
 
-    # Plot the scrublet values
+
+    """Plot the scrublet values"""
     fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-    fig.suptitle(f' Sample {sample} ', fontsize=18)
+    fig.suptitle(f' Sample {sample} ', fontsize=BIGGER_SIZE)
 
     # Violin plot in the first panel
     sc.pl.violin(adata[adata.obs['sample'] == sample], ['doublet_score'], jitter=0.5, ax=ax[0], show=False)
@@ -113,6 +123,7 @@ for sample in adata.obs['sample'].to_list():
     ax[0].plot([-.5, .5], [0.25, 0.25], '--r')
     ax[0].set_title('Doublet score per cell')
 
+    
     y, x, _ = ax[1].hist(
         adata[adata.obs['sample'] == sample].obs['doublet_score'], 
         bins=int(np.sqrt(adata[adata.obs['sample'] == sample].n_obs))

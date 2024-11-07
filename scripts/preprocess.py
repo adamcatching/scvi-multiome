@@ -2,18 +2,23 @@ import os
 import pandas as pd
 import scanpy as sc
 
+"""
+This script takes the output of either Cellbender or CellRanger and processes into a Anndata object
+with the parameters upon which quality control filtering can be done.
+"""
+
 # Read the samples table once
-samples = pd.read_csv(snakemake.input.input_table) # type: ignore
+samples = pd.read_csv(snakemake.input.input_table)
 
 # Extract the metadata for the specific sample in one step
-metadata = samples[samples['Sample_ID'] == snakemake.params.sample].iloc[0] # type: ignore
+metadata = samples[samples['Sample_ID'] == snakemake.params.sample].iloc[0]
 
-"""Preprocess the RNA side"""
+"""Preprocess the RNA data"""
 
 # Read the single-cell data
-#raw_counts = os.path.join('/data/CARD_singlecell/SN_atlas/cellbender/data/samples/', snakemake.params.sample, 'cellbender_gex_counts_filtered.h5')
-adata = sc.read_10x_h5(snakemake.input.anndata) # type: ignore
-# Ensure unique variable names
+adata = sc.read_10x_h5(snakemake.input.rna_anndata)
+
+# Ensure unique variable names (MUST BE DONE FIRST!)
 adata.var_names_make_unique()
 
 # Make a raw counts layer
@@ -74,13 +79,13 @@ try:
 except:
     print("can't map genes")
 # Calculate nearest neighbors
-#sc.pp.neighbors(adata)
+sc.pp.neighbors(adata)
 
 # Calculate UMAP
-#sc.tl.umap(adata)
+sc.tl.umap(adata)
 
 # Save the AnnData object
-adata.write(filename=snakemake.output.anndata, compression='gzip')
+adata.write(filename=snakemake.output.rna_anndata, compression='gzip')
 
 """Perform ATAC QC metrics"""
 """sc.pp.calculate_qc_metrics(adata['atac'], percent_top=None, log1p=False, inplace=True)

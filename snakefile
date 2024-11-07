@@ -25,7 +25,7 @@ localrules: all
 
 rule all:
     input:
-        expand('data/samples/{dataset}/01_{dataset}_anndata_object.h5ad', dataset=datasets)
+        expand('data/samples/{dataset}/02_{dataset}_anndata_filtered_rna.h5ad', dataset=datasets)
 
 """rule move_data:
     script:
@@ -42,9 +42,9 @@ rule pileup:
 rule preprocess:
     input:
         input_table=input_table,
-        anndata='data/samples/{dataset}/cellbender_gex_counts_filtered.h5'
+        rna_anndata='data/samples/{dataset}/cellbender_gex_counts_filtered.h5'
     output:
-        anndata='data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad'
+        rna_anndata='data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad'
     conda:
         envs['singlecell']
     params:
@@ -55,11 +55,46 @@ rule preprocess:
     script:
         'scripts/preprocess.py'
 
+
 rule merge_unfiltered:
     input:
-        anndata=expand('data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad', dataset=datasets)
+        rna_anndata=expand('data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad', dataset=datasets)
     output:
-        anndata='data/atlas/02_merged_anndata_rna.h5ad'
+        merged_rna_anndata='data/atlas/01_merged_anndata_rna.h5ad'
+    conda:
+        envs['singlecell']
+    resources:
+        runtime=240, mem_mb=1500000, disk_mb=10000, slurm_partition='largemem' 
+    script:
+        'scripts/merge_anndata.py'
+
+rule plot_qc_rna:
+    input:
+        merged_rna_anndata='data/atlas/01_merged_anndata_rna.h5ad'
+    conda:
+        envs['muon']
+    resources:
+        runtime=120, mem_mb=150000, disk_mb=10000, slurm_partition='largemem' 
+    script:
+        'scripts/plot_qc_metrics.py'
+
+rule filter_rna:
+    input:        
+        rna_anndata='data/samples/{dataset}/01_{dataset}_anndata_object_rna.h5ad'
+    output:
+        rna_anndata='data/samples/{dataset}/02_{dataset}_anndata_filtered_rna.h5ad'
+    conda:
+        envs['singlecell']
+    resources:
+        runtime=120, mem_mb=100000, disk_mb=10000, slurm_partition='quick' 
+    script: 
+        'scripts/rna_filter.py'
+
+rule merge_filtered_rna:
+    input:
+        rna_anndata=expand('data/samples/{dataset}/02_{dataset}_anndata_filtered_rna.h5ad', dataset=datasets)
+    output:
+        merged_rna_anndata='data/atlas/02_filtered_anndata_rna.h5ad'
     conda:
         envs['singlecell']
     resources:
@@ -67,33 +102,36 @@ rule merge_unfiltered:
     script:
         'scripts/merge_anndata.py'
 
-rule plot_qc:
+rule atac_preproces:
     input:
-        anndata='data/atlas/02_merged_anndata_rna.h5ad'
+        input_table=input_table,
+        atac_anndata='data/samples/{dataset}/filtered_feature_bc_matrix.h5'
+    output:
+        atac_anndata='data/samples/{dataset}/01_{dataset}_anndata_object_atac.h5ad'
     conda:
         envs['muon']
     resources:
-        runtime=120, mem_mb=100000, disk_mb=10000, slurm_partition='largemem' 
+        runtime=120, mem_mb=50000, disk_mb=10000, slurm_partition='quick' 
     script:
-        'scripts/plot_qc_metrics.py'
+        'scripts/atac_preprocess.py'
 
-"""rule filter:
-    input:        
-        anndata='data/atlas/02_merged_anndata_rna.h5ad'
-    output:
-        seurat='data/atlas/03_merged_anndata_rna.h5ad'
+"""rule plot_qc_atac:
+    input:
+        atac_anndata='data/samples/{dataset}/01_{dataset}_anndata_object_atac.h5'
     conda:
         envs['singlecell']
-    resources:
-        runtime=120, mem_mb=64000, disk_mb=10000, slurm_partition='quick' 
-    script: 
-        'scripts/rna_filter.py'
+
+rule filter_atac:
+
+rule merge_rna_atac:
+    in
+        
 
 rule rna_workflow:
     input:
-        anndata='data/atlas/03_merged_anndata_rna.h5mu',
+        anndata='data/atlas/03_filtered_anndata_rna.h5mu',
     output:
-        anndata='data/atlas/04_merged_anndata_rna.h5mu',
+        anndata='data/atlas/04_modeled_anndata_rna.h5mu',
         model='data/models/rna/model_history.csv'
     conda:
         envs['single_cell_gpu']
