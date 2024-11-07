@@ -12,14 +12,13 @@ envs = {'singlecell': 'envs/sc_2.yml', 'single_cell_gpu': 'envs/single_cell_gpu.
 
 # Define RNA thresholds
 mito_percent_thresh = 15
-doublet_thresh = 0.2
-min_total_counts = 500
+ribo_percent_thresh = 10
+doublet_thresh = 0.25
+min_genes_per_cell = 500
 
 # Define ATAC thresholds
 min_peak_counts = 500
-min_num_cell_by_counts = 200
-
-
+min_num_cell_by_counts = 10
 
 localrules: all
 
@@ -73,8 +72,6 @@ rule plot_qc:
         anndata='data/atlas/02_merged_anndata_rna.h5ad'
     conda:
         envs['muon']
-    params:
-        
     resources:
         runtime=120, mem_mb=100000, disk_mb=10000, slurm_partition='largemem' 
     script:
