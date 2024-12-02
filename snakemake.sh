@@ -10,4 +10,7 @@
 module purge
 module load snakemake/7.7.0
 
-snakemake --cores all --profile profile/snakemake_profile --use-conda -f plot_qc
+snakemake --cores all --profile profile/snakemake_profile --use-conda -f rna_model
+
+# Try with diagnosis specific
+# 3D UMAP in holoviews
