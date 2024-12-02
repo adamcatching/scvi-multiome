@@ -27,7 +27,7 @@ do
     mkdir $output_file_base"/sample/"$Sample_ID
 
     # Copy cellranger output
-    #cp $input_file_base"batch"$Use_batch"/Multiome/"$Sample_ID"-ARC/outs/raw_feature_bc_matrix.h5" $output_file_base"/samples/"$Sample_ID"/raw_feature_bc_matrix.h5"
+    cp $input_file_base"batch"$Use_batch"/Multiome/"$Sample_ID"-ARC/outs/raw_feature_bc_matrix.h5" $output_file_base"/samples/"$Sample_ID"/raw_feature_bc_matrix.h5"
     #cp $input_file_base"batch"$Use_batch"/Multiome/"$Sample_ID"-ARC/outs/filtered_feature_bc_matrix.h5" $output_file_base"/samples/"$Sample_ID"/filtered_feature_bc_matrix.h5"
     #cp $input_file_base"batch"$Use_batch"/Multiome/"$Sample_ID"-ARC/outs/atac_peak_annotation.tsv" $output_file_base"/samples/"$Sample_ID"/atac_peak_annotation.tsv"
     #cp $input_file_base"batch"$Use_batch"/Multiome/"$Sample_ID"-ARC/outs/atac_fragments.tsv.gz" $output_file_base"/samples/"$Sample_ID"/atac_fragments.tsv.gz"

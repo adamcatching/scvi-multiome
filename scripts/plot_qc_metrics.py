@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scanpy as sc
+import numpy as np
 
 # Keep consistent font sizes
 
@@ -25,9 +26,9 @@ cm = 1/2.54
 sns.set_context('paper')
 
 # Save the AnnData object
-adata = sc.read_h5ad(snakemake.input.anndata) # type: ignore
+adata = sc.read_h5ad(snakemake.input.merged_rna_anndata) 
 
-for sample in adata.obs['sample'].to_list():
+for sample in adata.obs['sample'].drop_duplicates().to_list():
 
     # Make plot directory
     try:
@@ -57,7 +58,7 @@ for sample in adata.obs['sample'].to_list():
     ax[1].set_yscale("log")
     ax[1].set_xlabel('percent')
     ax[1].set_ylabel('number of cells')
-    ax[1].plot([snakemake.mito_percent_thresh, snakemake.mito_percent_thresh], [1, y.max()], '--r')
+    ax[1].plot([15, 15], [1, y.max()], '--r')
     ax[1].set_ylim(0, y.max())
     ax[1].set_title('Percent mitochondria per cell')
     plt.savefig(f'plots/{sample}/mito_pct.png', dpi=300)
@@ -71,7 +72,7 @@ for sample in adata.obs['sample'].to_list():
     sc.pl.violin(adata[adata.obs['sample'] == sample], ['pct_counts_rb'], jitter=0.5, ax=ax[0], show=False)
     ax[0].set_ylabel('percent')
     ax[0].set_xlim(-.75, .75)
-    ax[0].plot([-.5, .5], [snakemake.ribo_precent_thresh, snakemake.ribo_precent_thresh], '--r')
+    ax[0].plot([-.5, .5], [15, 15], '--r')
     ax[0].set_title('Percent ribosome genes per cell')
 
     # Histogram of values in the second panel
@@ -79,7 +80,7 @@ for sample in adata.obs['sample'].to_list():
         adata[adata.obs['sample'] == sample].obs['pct_counts_rb'], 
         bins=int(np.sqrt(adata[adata.obs['sample'] == sample].n_obs))
         )
-    ax[1].plot([snakemake.ribo_precent_thresh, snakemake.ribo_precent_thresh], [1, y.max()], '--r')
+    ax[1].plot([10, 10], [1, y.max()], '--r')
     ax[1].set_ylim(0, y.max())
     ax[1].set_yscale("log")
     ax[1].set_xlabel('percent')
@@ -97,6 +98,7 @@ for sample in adata.obs['sample'].to_list():
     ax[0].plot([-.5, .5], [500, 500], '--r')
     ax[0].set_ylabel('total counts')
     ax[0].set_xlim(-.75, .75)
+    ax[0].plot([-.5, .5], [500, 500], '--r')
     ax[0].set_title('Number of genes per cell')
 
     # Histogram of values in the second panel
@@ -118,6 +120,7 @@ for sample in adata.obs['sample'].to_list():
 
     # Violin plot in the first panel
     sc.pl.violin(adata[adata.obs['sample'] == sample], ['doublet_score'], jitter=0.5, ax=ax[0], show=False)
+    ax[0].plot([-.5, .5], [0.25, 0.25], '--r')
     ax[0].set_ylabel('droplet score')
     ax[0].set_xlim(-.75, .75)
     ax[0].plot([-.5, .5], [0.25, 0.25], '--r')
@@ -128,6 +131,7 @@ for sample in adata.obs['sample'].to_list():
         adata[adata.obs['sample'] == sample].obs['doublet_score'], 
         bins=int(np.sqrt(adata[adata.obs['sample'] == sample].n_obs))
         )
+    ax[1].plot([0.25, 0.25], [1, y.max()], '--r')
     ax[1].plot([0.25, 0.25], [1, y.max()], '--r')
     ax[1].set_ylim(0, y.max())
     ax[1].set_xlabel('droplet score')

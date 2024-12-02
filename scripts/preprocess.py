@@ -25,8 +25,6 @@ adata.var_names_make_unique()
 adata.layers['counts'] = adata.X.copy()
 adata.raw = adata
 
-
-
 # Add mitochondrial and ribosomal markers
 adata.var['mt'] = adata.var_names.str.startswith('MT-')
 adata.var['rb'] = adata.var_names.str.startswith(('RPL', 'RPS'))
@@ -71,7 +69,7 @@ sc.pp.log1p(adata)
 adata.layers['data']=adata.X.copy() 
 
 # Calculate cell cycle()
-cell_cycle_genes = [x.strip() for x in open('/data/CARD_singlecell/SN_atlas/rna_pipeline/input/lab_cell_cycle_genes.txt')]
+cell_cycle_genes = [x.strip() for x in open('/data/CARD_singlecell/SN_atlas/input/lab_cell_cycle_genes.txt')]
 s_genes = cell_cycle_genes[:43]
 g2m_genes = cell_cycle_genes[43:]
 try:

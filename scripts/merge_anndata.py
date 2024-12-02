@@ -1,6 +1,8 @@
-import scanpy as sc
 import anndata as ad
 import pandas as pd
+import scanpy as sc
+
+
 
 # Open the data containing the important diagnosis
 important_diagnosis_df = pd.read_csv('input/SN_diagnoses2024 - control50_PD_DLB_only.csv')

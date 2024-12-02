@@ -13,7 +13,7 @@ import anndata as ad
 samples = pd.read_csv(snakemake.input.input_table) # type: ignore
 
 # Extract the metadata for the specific sample in one step
-metadata = samples[samples['Sample_ID'] == snakemake.params.sample].iloc[0] # type: ignore
+metadata = samples[samples['Sample_ID'] == snakemake.params.sample].iloc[0]
 
 # Import all peaks to a muon object
 mdata = mu.read_10x_h5(snakemake.input.atac_anndata)
@@ -26,6 +26,7 @@ rna.var_names_make_unique()
 # Save the raw layer
 atac.layers['peaks'] = atac.X.copy()
 atac.raw = atac
+atac.obs['cell_barcode'] = atac.obs_names
 
 # Add metadata to the AnnData object directly from the metadata dataframe
 metadata_dict = {
@@ -50,15 +51,14 @@ for key, value in metadata_dict.items():
 # Calculate QC metrics
 sc.pp.calculate_qc_metrics(atac, percent_top=None, log1p=False, inplace=True)
 
+atac.obs['NS']=1
+
 # Calculate nucleosome signal
 mu.atac.tl.nucleosome_signal(atac, n=1e6)
 
 # Calculate translation start site enrichment
 mu.atac.tl.get_gene_annotation_from_rna(mdata['rna']).head(3)
 mu.atac.tl.tss_enrichment(mdata, n_tss=1000) 
-
-# Return fragments
-scvi.data.reads_to_fragments(atac)
 
 # Save the AnnData object
 atac.write(filename=snakemake.output.atac_anndata, compression='gzip')
